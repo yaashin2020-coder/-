@@ -272,7 +272,7 @@
 
       <div id="no-stores-msg" hidden>
         <div class="error-box">
-          周辺に店舗が見つかりませんでした。検索範囲を広げるか、別のお店を選んでください。
+          <div id="no-stores-text">周辺に店舗が見つかりませんでした。検索範囲を広げるか、別のお店を選んでください。</div>
         </div>
       </div>
 
@@ -561,6 +561,9 @@ async function doSearch() {
   app.foundStores = [...seen.values()].sort((a, b) => a.dist - b.dist).slice(0, 40);
   loading.hidden = true;
   if (app.foundStores.length === 0) {
+    // エラーか0件かを判定
+    document.getElementById('no-stores-text').textContent =
+      '店舗が見つかりませんでした。\n① 検索範囲を広げる\n② 別の店舗を選ぶ\n③ 通信環境を確認する\nをお試しください。';
     noMsg.hidden = false;
   } else {
     renderStoreList(false);
@@ -570,12 +573,19 @@ async function doSearch() {
 
 function searchChain(service, chain) {
   return new Promise(resolve => {
+    // 10秒でタイムアウト
+    const timer = setTimeout(() => resolve([]), 10000);
     service.nearbySearch(
       { location: app.location, radius: app.radius, keyword: chain.kw },
       (results, status) => {
-        resolve(
-          status === google.maps.places.PlacesServiceStatus.OK ? results : []
-        );
+        clearTimeout(timer);
+        if (status === google.maps.places.PlacesServiceStatus.OK) {
+          resolve(results);
+        } else {
+          // エラー内容をコンソールに出力
+          console.warn(`[${chain.name}] Places API status: ${status}`);
+          resolve([]);
+        }
       }
     );
   });
@@ -672,7 +682,9 @@ async function calcRoute() {
     }
 
     const result = await new Promise((resolve, reject) => {
+      const timer = setTimeout(() => reject('TIMEOUT'), 15000);
       new google.maps.DirectionsService().route(request, (res, status) => {
+        clearTimeout(timer);
         if (status === google.maps.DirectionsStatus.OK) resolve(res);
         else reject(status);
       });
@@ -690,7 +702,12 @@ async function calcRoute() {
 
   } catch (err) {
     console.error('Directions error:', err);
-    alert('ルートの計算に失敗しました。もう一度お試しください。');
+    const msg = err === 'TIMEOUT'
+      ? 'ルート計算がタイムアウトしました。\n通信環境を確認して再度お試しください。'
+      : err === 'REQUEST_DENIED'
+      ? 'APIキーのエラーです。\nDirections APIが有効か確認してください。\n(エラー: ' + err + ')'
+      : 'ルートの計算に失敗しました。\n(エラー: ' + err + ')';
+    alert(msg);
     showStep(3);
     btn.disabled = false;
     btn.textContent = 'ルートを計算する →';
