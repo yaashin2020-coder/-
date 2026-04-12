@@ -635,8 +635,25 @@ function updateSelCount() {
 }
 
 // ============================================================
-// ルート計算
+// ルート計算（Routes API New 使用）
 // ============================================================
+const MAPS_API_KEY = 'AIzaSyDdXWDXKlM03iMZ62h7VOAK7OYM5kHJuVs';
+
+function decodePolyline(encoded) {
+  const pts = [];
+  let idx = 0, lat = 0, lng = 0;
+  while (idx < encoded.length) {
+    let b, shift = 0, result = 0;
+    do { b = encoded.charCodeAt(idx++) - 63; result |= (b & 0x1f) << shift; shift += 5; } while (b >= 0x20);
+    lat += (result & 1) ? ~(result >> 1) : (result >> 1);
+    shift = 0; result = 0;
+    do { b = encoded.charCodeAt(idx++) - 63; result |= (b & 0x1f) << shift; shift += 5; } while (b >= 0x20);
+    lng += (result & 1) ? ~(result >> 1) : (result >> 1);
+    pts.push({ lat: lat / 1e5, lng: lng / 1e5 });
+  }
+  return pts;
+}
+
 async function calcRoute() {
   const btn = document.getElementById('btn-calc');
   btn.disabled = true;
@@ -644,63 +661,95 @@ async function calcRoute() {
 
   const stores = app.foundStores.filter(s => app.selectedPlaceIds.has(s.id));
 
-  // Step 4の地図エリアに切り替え
   showStep(4);
   const mapEl = document.getElementById('map');
   app.map = new google.maps.Map(mapEl, {
     center: app.location, zoom: 13,
     mapTypeControl: false, streetViewControl: false, fullscreenControl: false,
   });
-  app.directionsRenderer = new google.maps.DirectionsRenderer({
-    map: app.map, suppressMarkers: false,
-  });
 
   try {
-    const origin = new google.maps.LatLng(app.location.lat, app.location.lng);
-    const storeLatLngs = stores.map(s =>
-      new google.maps.LatLng(s.location.lat(), s.location.lng())
-    );
+    const toWp = (lat, lng) => ({ location: { latLng: { latitude: lat, longitude: lng } } });
 
-    let request;
-    if (stores.length === 1) {
-      request = { origin, destination: storeLatLngs[0], travelMode: google.maps.TravelMode.DRIVING };
-    } else {
-      // 全店舗を最適化：出発地に戻るラウンドトリップで全ウェイポイントを自由に並び替え
-      request = {
-        origin,
-        destination: origin,
-        waypoints: storeLatLngs.map(loc => ({ location: loc, stopover: true })),
-        optimizeWaypoints: true,
-        travelMode: google.maps.TravelMode.DRIVING,
-      };
+    const reqBody = {
+      origin: toWp(app.location.lat, app.location.lng),
+      destination: stores.length === 1
+        ? toWp(stores[0].location.lat(), stores[0].location.lng())
+        : toWp(app.location.lat, app.location.lng),
+      travelMode: 'DRIVE',
+      languageCode: 'ja',
+    };
+    if (stores.length > 1) {
+      reqBody.intermediates = stores.map(s => ({
+        vehicleStopover: true,
+        location: { latLng: { latitude: s.location.lat(), longitude: s.location.lng() } },
+      }));
+      reqBody.optimizeWaypointOrder = true;
     }
 
-    const result = await new Promise((resolve, reject) => {
-      const timer = setTimeout(() => reject('TIMEOUT'), 15000);
-      new google.maps.DirectionsService().route(request, (res, status) => {
-        clearTimeout(timer);
-        if (status === google.maps.DirectionsStatus.OK) resolve(res);
-        else reject(status);
-      });
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 15000);
+    const resp = await fetch('https://routes.googleapis.com/directions/v2:computeRoutes', {
+      method: 'POST',
+      signal: controller.signal,
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Goog-Api-Key': MAPS_API_KEY,
+        'X-Goog-FieldMask': [
+          'routes.polyline.encodedPolyline',
+          'routes.legs.distanceMeters',
+          'routes.legs.duration',
+          'routes.optimizedIntermediateWaypointIndex',
+        ].join(','),
+      },
+      body: JSON.stringify(reqBody),
     });
+    clearTimeout(timer);
 
-    // 最適化された店舗順を取得
-    const waypointOrder = result.routes[0].waypoint_order;
-    app.orderedStores = waypointOrder.length > 0
-      ? waypointOrder.map(i => stores[i])
-      : stores;
+    if (!resp.ok) {
+      const e = await resp.json().catch(() => ({}));
+      throw new Error(e.error?.message || resp.statusText);
+    }
+    const result = await resp.json();
+    const route = result.routes?.[0];
+    if (!route) throw new Error('ルートが見つかりませんでした');
+
+    // 最適化された順番
+    const order = route.optimizedIntermediateWaypointIndex || [];
+    app.orderedStores = order.length > 0 ? order.map(i => stores[i]) : stores;
     app.routeResult = result;
 
-    app.directionsRenderer.setDirections(result);
+    // ルートを地図に描画
+    const path = decodePolyline(route.polyline.encodedPolyline);
+    new google.maps.Polyline({
+      path, map: app.map,
+      strokeColor: '#007AFF', strokeWeight: 5, strokeOpacity: 0.85,
+    });
+
+    // マーカー追加
+    const bounds = new google.maps.LatLngBounds();
+    const mkOpts = (pos, label, color) => ({
+      position: pos, map: app.map,
+      label: { text: label, color: 'white', fontWeight: 'bold', fontSize: '12px' },
+      icon: { path: google.maps.SymbolPath.CIRCLE, scale: 13,
+        fillColor: color, fillOpacity: 1, strokeColor: 'white', strokeWeight: 2 },
+    });
+    new google.maps.Marker(mkOpts(app.location, '出', '#34C759'));
+    bounds.extend(app.location);
+    app.orderedStores.forEach((store, i) => {
+      const pos = { lat: store.location.lat(), lng: store.location.lng() };
+      new google.maps.Marker(mkOpts(pos, String(i + 1), '#007AFF'));
+      bounds.extend(pos);
+    });
+    app.map.fitBounds(bounds, { padding: 50 });
+
     renderRouteInfo(result, app.orderedStores, stores.length);
 
   } catch (err) {
-    console.error('Directions error:', err);
-    const msg = err === 'TIMEOUT'
+    console.error('Route error:', err);
+    const msg = err.name === 'AbortError'
       ? 'ルート計算がタイムアウトしました。\n通信環境を確認して再度お試しください。'
-      : err === 'REQUEST_DENIED'
-      ? 'APIキーのエラーです。\nDirections APIが有効か確認してください。\n(エラー: ' + err + ')'
-      : 'ルートの計算に失敗しました。\n(エラー: ' + err + ')';
+      : 'ルートの計算に失敗しました。\n(エラー: ' + (err.message || err) + ')';
     alert(msg);
     showStep(3);
     btn.disabled = false;
@@ -714,7 +763,10 @@ function renderRouteInfo(result, orderedStores, storeCount) {
   const displayLegs = storeCount > 1 ? legs.slice(0, storeCount) : legs;
 
   let totalDist = 0, totalSec = 0;
-  displayLegs.forEach(l => { totalDist += l.distance.value; totalSec += l.duration.value; });
+  displayLegs.forEach(l => {
+    totalDist += l.distanceMeters || 0;
+    totalSec += parseInt(l.duration) || 0; // "1234s" → 1234
+  });
 
   document.getElementById('total-box').innerHTML = `
     <div class="total-item"><div class="total-val">${fmtDist(totalDist)}</div><div class="total-lbl">合計距離</div></div>
@@ -736,7 +788,7 @@ function renderRouteInfo(result, orderedStores, storeCount) {
       isLast ? 'dest' : '',
       String(i + 1),
       store.displayName,
-      `${leg.distance.text} ／ 約${leg.duration.text}`
+      `${fmtDist(leg.distanceMeters)} ／ 約${fmtTime(parseInt(leg.duration))}`
     ));
   });
 }
