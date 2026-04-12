@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="まとめてルート">
+  <meta name="theme-color" content="#007AFF">
+  <title>まとめてルート</title>
+  <link rel="manifest" href="manifest.json">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Yu Gothic', sans-serif;
+      background: #f2f2f7;
+      color: #1c1c1e;
+      min-height: 100vh;
+    }
+
+    /* ヘッダー */
+    .app-header {
+      background: #007AFF;
+      color: white;
+      padding: 12px 20px;
+      padding-top: max(12px, env(safe-area-inset-top));
+      text-align: center;
+      position: sticky;
+      top: 0;
+      z-index: 200;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+    .app-header h1 { font-size: 18px; font-weight: 700; }
+    .step-indicator { display: flex; justify-content: center; gap: 6px; margin-top: 8px; }
+    .step-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: rgba(255,255,255,0.35); transition: background 0.3s;
+    }
+    .step-dot.active { background: white; }
+
+    /* レイアウト */
+    .container { max-width: 480px; margin: 0 auto; padding: 16px; }
+    .card {
+      background: white; border-radius: 16px;
+      padding: 18px; margin-bottom: 14px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    }
+    .card h2 { font-size: 16px; font-weight: 700; margin-bottom: 14px; }
+
+    /* ローディング */
+    .loading { text-align: center; padding: 36px 16px; }
+    .spinner {
+      width: 40px; height: 40px;
+      border: 3px solid #e5e5ea; border-top-color: #007AFF;
+      border-radius: 50%; animation: spin 0.8s linear infinite;
+      margin: 0 auto 14px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading p { color: #8e8e93; font-size: 15px; }
+
+    /* チェーンボタン */
+    .category-label {
+      font-size: 11px; color: #8e8e93; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.5px;
+      margin: 14px 0 8px;
+    }
+    .chain-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 4px; }
+    .chain-btn {
+      background: #f2f2f7; border: 2px solid transparent;
+      border-radius: 12px; padding: 10px 4px;
+      text-align: center; cursor: pointer;
+      transition: all 0.15s; font-size: 12px; color: #1c1c1e;
+      line-height: 1.3;
+    }
+    .chain-btn .icon { font-size: 22px; display: block; margin-bottom: 3px; }
+    .chain-btn.selected {
+      background: #EBF3FF; border-color: #007AFF; color: #007AFF; font-weight: 700;
+    }
+    .chain-btn:active { transform: scale(0.95); }
+
+    /* カスタム入力 */
+    .custom-row { display: flex; gap: 8px; margin-top: 10px; }
+    .custom-input {
+      flex: 1; border: 1.5px solid #e5e5ea; border-radius: 10px;
+      padding: 10px 12px; font-size: 15px; outline: none;
+    }
+    .custom-input:focus { border-color: #007AFF; }
+    .add-btn {
+      background: #007AFF; color: white; border: none;
+      border-radius: 10px; padding: 10px 16px;
+      font-size: 15px; font-weight: 700; cursor: pointer; white-space: nowrap;
+    }
+
+    /* ボタン */
+    .btn-primary {
+      width: 100%; background: #007AFF; color: white;
+      border: none; border-radius: 14px; padding: 16px;
+      font-size: 17px; font-weight: 700; cursor: pointer; transition: opacity 0.2s;
+    }
+    .btn-primary:disabled { opacity: 0.35; cursor: not-allowed; }
+    .btn-primary:active:not(:disabled) { opacity: 0.8; }
+    .btn-secondary {
+      width: 100%; background: #f2f2f7; color: #007AFF;
+      border: none; border-radius: 14px; padding: 14px;
+      font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 10px;
+    }
+    .btn-danger {
+      width: 100%; background: #fff2f2; color: #FF3B30;
+      border: none; border-radius: 14px; padding: 14px;
+      font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 10px;
+    }
+    .btn-green {
+      width: 100%; background: #34C759; color: white;
+      border: none; border-radius: 14px; padding: 16px;
+      font-size: 17px; font-weight: 700; cursor: pointer;
+    }
+
+    /* 店舗リスト */
+    .selection-hint {
+      font-size: 13px; color: #8e8e93; text-align: center; margin-bottom: 12px;
+    }
+    .selection-hint span { color: #007AFF; font-weight: 700; }
+    .store-item {
+      display: flex; align-items: center; padding: 11px 0;
+      border-bottom: 1px solid #f2f2f7; gap: 10px; cursor: pointer;
+    }
+    .store-item:last-child { border-bottom: none; }
+    .store-checkbox {
+      width: 24px; height: 24px; border: 2px solid #c7c7cc;
+      border-radius: 50%; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.15s;
+    }
+    .store-checkbox.checked { background: #007AFF; border-color: #007AFF; }
+    .store-checkbox.checked::after { content: '✓'; color: white; font-size: 13px; font-weight: 800; }
+    .store-info { flex: 1; min-width: 0; }
+    .store-name { font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .store-chain-tag { font-size: 11px; color: #007AFF; font-weight: 600; margin-top: 2px; }
+    .store-addr { font-size: 12px; color: #8e8e93; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .store-dist { font-size: 13px; color: #007AFF; font-weight: 700; flex-shrink: 0; }
+    .radius-selector { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+    .radius-btn {
+      padding: 6px 14px; border-radius: 20px; border: 1.5px solid #c7c7cc;
+      background: white; font-size: 13px; cursor: pointer; color: #1c1c1e;
+    }
+    .radius-btn.active { border-color: #007AFF; background: #EBF3FF; color: #007AFF; font-weight: 700; }
+
+    /* 地図 */
+    #map { width: 100%; height: 300px; }
+
+    /* ルート情報 */
+    .total-box {
+      display: flex; justify-content: space-around;
+      background: #f2f2f7; border-radius: 12px; padding: 12px 8px; margin-bottom: 14px;
+    }
+    .total-item { text-align: center; }
+    .total-val { font-size: 20px; font-weight: 800; color: #007AFF; }
+    .total-lbl { font-size: 11px; color: #8e8e93; margin-top: 2px; }
+
+    .route-step {
+      display: flex; align-items: flex-start; padding: 10px 0;
+      border-bottom: 1px solid #f2f2f7; gap: 12px;
+    }
+    .route-step:last-child { border-bottom: none; }
+    .step-num {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: #007AFF; color: white;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 800; flex-shrink: 0; margin-top: 1px;
+    }
+    .step-num.origin { background: #34C759; }
+    .step-num.dest { background: #FF3B30; }
+    .step-content { flex: 1; }
+    .step-title { font-size: 15px; font-weight: 600; }
+    .step-meta { font-size: 12px; color: #8e8e93; margin-top: 2px; }
+
+    /* エラー */
+    .error-box {
+      background: #fff2f2; border-radius: 10px; padding: 12px 14px;
+      color: #FF3B30; font-size: 14px; margin-bottom: 12px;
+    }
+
+    [hidden] { display: none !important; }
+
+    /* 地図の下のコンテンツ */
+    #step-map .container { padding-bottom: max(24px, env(safe-area-inset-bottom)); }
+  </style>
+</head>
+<body>
+
+<!-- ヘッダー -->
+<header class="app-header">
+  <h1>🗺 まとめてルート</h1>
+  <div class="step-indicator">
+    <div class="step-dot active" id="dot-1"></div>
+    <div class="step-dot" id="dot-2"></div>
+    <div class="step-dot" id="dot-3"></div>
+    <div class="step-dot" id="dot-4"></div>
+  </div>
+</header>
+
+<!-- STEP 1: 位置情報取得 -->
+<div id="step-location">
+  <div class="container">
+    <div class="card">
+      <div class="loading" id="location-loading">
+        <div class="spinner"></div>
+        <p>現在地を取得しています…</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- STEP 2: チェーン選択 -->
+<div id="step-chains" hidden>
+  <div class="container">
+    <div class="card">
+      <h2>行きたいお店を選んでください</h2>
+
+      <div class="category-label">100円ショップ</div>
+      <div class="chain-grid" id="grid-100yen"></div>
+
+      <div class="category-label">ホームセンター</div>
+      <div class="chain-grid" id="grid-home"></div>
+
+      <div class="category-label">作業服・アウトドア</div>
+      <div class="chain-grid" id="grid-work"></div>
+
+      <div class="category-label">インテリア・家具</div>
+      <div class="chain-grid" id="grid-furniture"></div>
+
+      <div class="category-label">ドラッグストア</div>
+      <div class="chain-grid" id="grid-drug"></div>
+
+      <div class="category-label">スーパー・量販店</div>
+      <div class="chain-grid" id="grid-super"></div>
+
+      <div class="category-label">家電量販店</div>
+      <div class="chain-grid" id="grid-electric"></div>
+
+      <div class="category-label">カスタム（店舗名を入力）</div>
+      <div class="custom-row">
+        <input type="text" class="custom-input" id="custom-input" placeholder="例：ユニクロ" maxlength="20">
+        <button class="add-btn" onclick="addCustomChain()">追加</button>
+      </div>
+      <div class="chain-grid" id="grid-custom" style="margin-top:8px;"></div>
+    </div>
+
+    <button class="btn-primary" id="btn-search" onclick="goToSearch()" disabled>
+      近くの店舗を探す →
+    </button>
+  </div>
+</div>
+
+<!-- STEP 3: 店舗選択 -->
+<div id="step-stores" hidden>
+  <div class="container">
+    <div class="card">
+      <h2>行きたい店舗を選んでください</h2>
+      <p class="selection-hint">選択中: <span id="sel-count">0</span> / 最大5件</p>
+
+      <div style="margin-bottom:12px;">
+        <div style="font-size:13px; color:#8e8e93; margin-bottom:6px;">検索範囲</div>
+        <div class="radius-selector" id="radius-selector"></div>
+      </div>
+
+      <div id="store-list-loading" class="loading" hidden>
+        <div class="spinner"></div>
+        <p>近くの店舗を検索中…</p>
+      </div>
+
+      <div id="no-stores-msg" hidden>
+        <div class="error-box">
+          周辺に店舗が見つかりませんでした。検索範囲を広げるか、別のお店を選んでください。
+        </div>
+      </div>
+
+      <div id="store-list"></div>
+    </div>
+
+    <button class="btn-primary" id="btn-calc" onclick="calcRoute()" disabled>
+      ルートを計算する →
+    </button>
+    <button class="btn-secondary" onclick="showStep(2)">← 店舗の種類を選び直す</button>
+  </div>
+</div>
+
+<!-- STEP 4: ルート表示 -->
+<div id="step-map" hidden>
+  <div id="map"></div>
+  <div class="container">
+    <div class="card" id="route-card">
+      <h2>最適ルート</h2>
+      <div class="total-box" id="total-box"></div>
+      <div id="route-steps"></div>
+    </div>
+
+    <button class="btn-green" onclick="openGoogleMaps()">
+      Google マップで開く（ナビ開始）
+    </button>
+    <button class="btn-secondary" onclick="showStep(3)">← 店舗を選び直す</button>
+    <button class="btn-danger" onclick="restart()">最初からやり直す</button>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// APIキー設定（ここに自分のGoogle Maps APIキーを入力）
+// ============================================================
+const API_KEY = 'YOUR_API_KEY_HERE';
+
+// ============================================================
+// 店舗チェーンデータ
+// ============================================================
+const CHAIN_DATA = {
+  '100yen': [
+    { id: 'daiso',    name: 'ダイソー',     icon: '💴', kw: 'ダイソー' },
+    { id: 'seria',    name: 'セリア',       icon: '🌸', kw: 'セリア 100円' },
+    { id: 'cando',    name: 'キャンドゥ',   icon: '🕯️', kw: 'キャンドゥ' },
+    { id: 'watts',    name: 'ワッツ',       icon: '💡', kw: 'ワッツ 100円' },
+  ],
+  'home': [
+    { id: 'konan',    name: 'コーナン',     icon: '🔨', kw: 'コーナン' },
+    { id: 'cainz',    name: 'カインズ',     icon: '🏠', kw: 'カインズ' },
+    { id: 'komeri',   name: 'コメリ',       icon: '🌱', kw: 'コメリ' },
+    { id: 'vivahome', name: 'ビバホーム',   icon: '🔧', kw: 'ビバホーム' },
+    { id: 'keiyod2',  name: 'ケーヨーD2',  icon: '🪚', kw: 'ケーヨーD2' },
+    { id: 'nafco',    name: 'ナフコ',       icon: '🛠️', kw: 'ナフコ' },
+  ],
+  'work': [
+    { id: 'workman',  name: 'ワークマン',      icon: '👷', kw: 'ワークマン' },
+    { id: 'workmanp', name: 'ワークマンプラス', icon: '🧥', kw: 'ワークマンプラス' },
+    { id: 'montbell', name: 'モンベル',        icon: '⛺', kw: 'モンベル' },
+  ],
+  'furniture': [
+    { id: 'nitori',   name: 'ニトリ',  icon: '🛋️', kw: 'ニトリ' },
+    { id: 'ikea',     name: 'IKEA',    icon: '🪑', kw: 'IKEA' },
+  ],
+  'drug': [
+    { id: 'matsukiyo', name: 'マツキヨ',   icon: '💊', kw: 'マツモトキヨシ' },
+    { id: 'welcia',    name: 'ウエルシア', icon: '💉', kw: 'ウエルシア' },
+    { id: 'tsuruha',   name: 'ツルハ',     icon: '🏥', kw: 'ツルハドラッグ' },
+    { id: 'sugi',      name: 'スギ薬局',   icon: '🌿', kw: 'スギ薬局' },
+    { id: 'cosmos',    name: 'コスモス',   icon: '🌺', kw: 'コスモス薬品' },
+    { id: 'sundrug',   name: 'サンドラッグ',icon: '☀️', kw: 'サンドラッグ' },
+  ],
+  'super': [
+    { id: 'aeon',      name: 'イオン',       icon: '🛒', kw: 'イオン' },
+    { id: 'itoyokado', name: 'ヨーカドー',   icon: '🏪', kw: 'イトーヨーカドー' },
+    { id: 'costco',    name: 'コストコ',     icon: '📦', kw: 'コストコ' },
+    { id: 'donki',     name: 'ドン・キホーテ',icon: '🐧', kw: 'ドン・キホーテ' },
+  ],
+  'electric': [
+    { id: 'yamada',    name: 'ヤマダ電機',   icon: '🖥️', kw: 'ヤマダ電機' },
+    { id: 'bic',       name: 'ビックカメラ', icon: '📷', kw: 'ビックカメラ' },
+    { id: 'yodobashi', name: 'ヨドバシ',     icon: '📱', kw: 'ヨドバシカメラ' },
+    { id: 'edion',     name: 'エディオン',   icon: '📺', kw: 'エディオン' },
+    { id: 'joshin',    name: 'ジョーシン',   icon: '🎮', kw: 'ジョーシン' },
+  ],
+};
+
+const GRID_MAP = {
+  '100yen': 'grid-100yen', 'home': 'grid-home', 'work': 'grid-work',
+  'furniture': 'grid-furniture', 'drug': 'grid-drug',
+  'super': 'grid-super', 'electric': 'grid-electric',
+};
+
+const RADIUS_OPTIONS = [
+  { label: '2km',  value: 2000 },
+  { label: '5km',  value: 5000 },
+  { label: '10km', value: 10000 },
+];
+
+// ============================================================
+// アプリ状態
+// ============================================================
+const app = {
+  location: null,
+  selectedChainIds: new Set(),
+  customChains: [],
+  radius: 5000,
+  foundStores: [],
+  selectedPlaceIds: new Set(),
+  orderedStores: [],
+  routeResult: null,
+  map: null,
+  directionsRenderer: null,
+};
+
+// ============================================================
+// Google Maps 初期化コールバック
+// ============================================================
+function initApp() {
+  renderChainButtons();
+  renderRadiusSelector();
+  getLocation();
+}
+
+// ============================================================
+// チェーンボタン描画
+// ============================================================
+function renderChainButtons() {
+  for (const [cat, chains] of Object.entries(CHAIN_DATA)) {
+    const grid = document.getElementById(GRID_MAP[cat]);
+    if (!grid) continue;
+    chains.forEach(chain => grid.appendChild(makeChainBtn(chain)));
+  }
+}
+
+function makeChainBtn(chain) {
+  const btn = document.createElement('button');
+  btn.className = 'chain-btn';
+  btn.id = 'cb-' + chain.id;
+  btn.innerHTML = `<span class="icon">${chain.icon}</span>${chain.name}`;
+  btn.onclick = () => toggleChain(chain.id, btn);
+  return btn;
+}
+
+function toggleChain(id, btn) {
+  if (app.selectedChainIds.has(id)) {
+    app.selectedChainIds.delete(id);
+    btn.classList.remove('selected');
+  } else {
+    app.selectedChainIds.add(id);
+    btn.classList.add('selected');
+  }
+  document.getElementById('btn-search').disabled = app.selectedChainIds.size === 0;
+}
+
+function addCustomChain() {
+  const input = document.getElementById('custom-input');
+  const name = input.value.trim();
+  if (!name) return;
+  const id = 'custom-' + Date.now();
+  const chain = { id, name, icon: '📍', kw: name };
+  app.customChains.push(chain);
+  app.selectedChainIds.add(id);
+  const grid = document.getElementById('grid-custom');
+  const btn = makeChainBtn(chain);
+  btn.classList.add('selected');
+  grid.appendChild(btn);
+  input.value = '';
+  document.getElementById('btn-search').disabled = false;
+}
+
+// ============================================================
+// 検索範囲セレクター
+// ============================================================
+function renderRadiusSelector() {
+  const sel = document.getElementById('radius-selector');
+  RADIUS_OPTIONS.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'radius-btn' + (opt.value === app.radius ? ' active' : '');
+    btn.textContent = opt.label;
+    btn.onclick = () => {
+      app.radius = opt.value;
+      document.querySelectorAll('.radius-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      if (app.foundStores.length > 0) doSearch();
+    };
+    sel.appendChild(btn);
+  });
+}
+
+// ============================================================
+// 位置情報取得
+// ============================================================
+function getLocation() {
+  if (!navigator.geolocation) {
+    setLocationError('このブラウザは位置情報に対応していません');
+    return;
+  }
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      app.location = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+      showStep(2);
+    },
+    err => {
+      const msg = err.code === 1
+        ? 'ブラウザの設定から位置情報を許可してください'
+        : '位置情報の取得に失敗しました。再試行してください';
+      setLocationError(msg);
+    },
+    { enableHighAccuracy: true, timeout: 12000 }
+  );
+}
+
+function setLocationError(msg) {
+  document.getElementById('location-loading').innerHTML = `
+    <p style="font-size:36px;margin-bottom:12px;">⚠️</p>
+    <p style="color:#FF3B30;font-weight:700;font-size:15px;">位置情報エラー</p>
+    <p style="color:#8e8e93;margin-top:8px;font-size:14px;">${msg}</p>
+    <button class="btn-primary" style="margin-top:16px;" onclick="getLocation()">再試行</button>
+  `;
+}
+
+// ============================================================
+// 店舗検索
+// ============================================================
+function goToSearch() {
+  showStep(3);
+  doSearch();
+}
+
+async function doSearch() {
+  const list = document.getElementById('store-list');
+  const loading = document.getElementById('store-list-loading');
+  const noMsg = document.getElementById('no-stores-msg');
+  const calcBtn = document.getElementById('btn-calc');
+
+  list.innerHTML = '';
+  noMsg.hidden = true;
+  loading.hidden = false;
+  calcBtn.disabled = true;
+
+  // 検索対象チェーンを収集
+  const chains = [];
+  for (const [cat, arr] of Object.entries(CHAIN_DATA)) {
+    arr.forEach(c => { if (app.selectedChainIds.has(c.id)) chains.push(c); });
+  }
+  app.customChains.forEach(c => { if (app.selectedChainIds.has(c.id)) chains.push(c); });
+
+  // 一時マップ（PlacesService用）
+  if (!app._dummyMap) {
+    const div = document.createElement('div');
+    app._dummyMap = new google.maps.Map(div, { center: app.location, zoom: 14 });
+  }
+  const service = new google.maps.places.PlacesService(app._dummyMap);
+
+  // 各チェーンを並行検索
+  const results = await Promise.allSettled(
+    chains.map(c => searchChain(service, c))
+  );
+
+  // 重複除去・距離ソート
+  const seen = new Map();
+  results.forEach((r, i) => {
+    if (r.status !== 'fulfilled') return;
+    r.value.forEach(place => {
+      if (seen.has(place.place_id)) return;
+      seen.set(place.place_id, {
+        ...place,
+        chainName: chains[i].name,
+        dist: haverDist(app.location, {
+          lat: place.geometry.location.lat(),
+          lng: place.geometry.location.lng(),
+        }),
+      });
+    });
+  });
+
+  app.foundStores = [...seen.values()].sort((a, b) => a.dist - b.dist).slice(0, 40);
+  app.selectedPlaceIds = new Set();
+
+  loading.hidden = true;
+  if (app.foundStores.length === 0) {
+    noMsg.hidden = false;
+  } else {
+    renderStoreList();
+  }
+  updateSelCount();
+}
+
+function searchChain(service, chain) {
+  return new Promise(resolve => {
+    service.nearbySearch(
+      { location: app.location, radius: app.radius, keyword: chain.kw },
+      (results, status) => {
+        resolve(
+          status === google.maps.places.PlacesServiceStatus.OK ? results : []
+        );
+      }
+    );
+  });
+}
+
+// ============================================================
+// 店舗リスト表示
+// ============================================================
+function renderStoreList() {
+  const list = document.getElementById('store-list');
+  list.innerHTML = '';
+  app.foundStores.forEach(store => {
+    const el = document.createElement('div');
+    el.className = 'store-item';
+    const checked = app.selectedPlaceIds.has(store.place_id);
+    el.innerHTML = `
+      <div class="store-checkbox ${checked ? 'checked' : ''}"></div>
+      <div class="store-info">
+        <div class="store-name">${esc(store.name)}</div>
+        <div class="store-chain-tag">${esc(store.chainName)}</div>
+        <div class="store-addr">${esc(store.vicinity || '')}</div>
+      </div>
+      <div class="store-dist">${fmtDist(store.dist)}</div>
+    `;
+    el.onclick = () => toggleStore(store.place_id, el);
+    list.appendChild(el);
+  });
+}
+
+function toggleStore(placeId, el) {
+  const cb = el.querySelector('.store-checkbox');
+  if (app.selectedPlaceIds.has(placeId)) {
+    app.selectedPlaceIds.delete(placeId);
+    cb.classList.remove('checked');
+  } else {
+    if (app.selectedPlaceIds.size >= 5) { alert('最大5件まで選択できます'); return; }
+    app.selectedPlaceIds.add(placeId);
+    cb.classList.add('checked');
+  }
+  updateSelCount();
+}
+
+function updateSelCount() {
+  const n = app.selectedPlaceIds.size;
+  document.getElementById('sel-count').textContent = n;
+  document.getElementById('btn-calc').disabled = n < 1;
+}
+
+// ============================================================
+// ルート計算
+// ============================================================
+async function calcRoute() {
+  const btn = document.getElementById('btn-calc');
+  btn.disabled = true;
+  btn.textContent = '計算中…';
+
+  const stores = app.foundStores.filter(s => app.selectedPlaceIds.has(s.place_id));
+
+  // Step 4の地図エリアに切り替え
+  showStep(4);
+  const mapEl = document.getElementById('map');
+  app.map = new google.maps.Map(mapEl, {
+    center: app.location, zoom: 13,
+    mapTypeControl: false, streetViewControl: false, fullscreenControl: false,
+  });
+  app.directionsRenderer = new google.maps.DirectionsRenderer({
+    map: app.map, suppressMarkers: false,
+  });
+
+  try {
+    const origin = new google.maps.LatLng(app.location.lat, app.location.lng);
+    const storeLatLngs = stores.map(s =>
+      new google.maps.LatLng(s.geometry.location.lat(), s.geometry.location.lng())
+    );
+
+    let request;
+    if (stores.length === 1) {
+      request = { origin, destination: storeLatLngs[0], travelMode: google.maps.TravelMode.DRIVING };
+    } else {
+      // 全店舗を最適化：出発地に戻るラウンドトリップで全ウェイポイントを自由に並び替え
+      request = {
+        origin,
+        destination: origin,
+        waypoints: storeLatLngs.map(loc => ({ location: loc, stopover: true })),
+        optimizeWaypoints: true,
+        travelMode: google.maps.TravelMode.DRIVING,
+      };
+    }
+
+    const result = await new Promise((resolve, reject) => {
+      new google.maps.DirectionsService().route(request, (res, status) => {
+        if (status === google.maps.DirectionsStatus.OK) resolve(res);
+        else reject(status);
+      });
+    });
+
+    // 最適化された店舗順を取得
+    const waypointOrder = result.routes[0].waypoint_order;
+    app.orderedStores = waypointOrder.length > 0
+      ? waypointOrder.map(i => stores[i])
+      : stores;
+    app.routeResult = result;
+
+    app.directionsRenderer.setDirections(result);
+    renderRouteInfo(result, app.orderedStores, stores.length);
+
+  } catch (err) {
+    console.error('Directions error:', err);
+    alert('ルートの計算に失敗しました。もう一度お試しください。');
+    showStep(3);
+    btn.disabled = false;
+    btn.textContent = 'ルートを計算する →';
+  }
+}
+
+function renderRouteInfo(result, orderedStores, storeCount) {
+  const legs = result.routes[0].legs;
+  // ラウンドトリップの場合、最後のleg（帰路）は表示に含めない
+  const displayLegs = storeCount > 1 ? legs.slice(0, storeCount) : legs;
+
+  let totalDist = 0, totalSec = 0;
+  displayLegs.forEach(l => { totalDist += l.distance.value; totalSec += l.duration.value; });
+
+  document.getElementById('total-box').innerHTML = `
+    <div class="total-item"><div class="total-val">${fmtDist(totalDist)}</div><div class="total-lbl">合計距離</div></div>
+    <div class="total-item"><div class="total-val">${fmtTime(totalSec)}</div><div class="total-lbl">目安時間</div></div>
+    <div class="total-item"><div class="total-val">${storeCount}か所</div><div class="total-lbl">訪問店舗</div></div>
+  `;
+
+  const steps = document.getElementById('route-steps');
+  steps.innerHTML = '';
+
+  // 出発
+  steps.appendChild(makeStepEl('origin', '出', '現在地', ''));
+
+  // 各店舗
+  orderedStores.forEach((store, i) => {
+    const leg = displayLegs[i];
+    const isLast = i === orderedStores.length - 1;
+    steps.appendChild(makeStepEl(
+      isLast ? 'dest' : '',
+      String(i + 1),
+      store.name,
+      `${leg.distance.text} ／ 約${leg.duration.text}`
+    ));
+  });
+}
+
+function makeStepEl(cls, num, title, meta) {
+  const el = document.createElement('div');
+  el.className = 'route-step';
+  el.innerHTML = `
+    <div class="step-num ${cls}">${num}</div>
+    <div class="step-content">
+      <div class="step-title">${esc(title)}</div>
+      ${meta ? `<div class="step-meta">${esc(meta)}</div>` : ''}
+    </div>
+  `;
+  return el;
+}
+
+// ============================================================
+// Google マップで開く
+// ============================================================
+function openGoogleMaps() {
+  if (!app.orderedStores.length) return;
+  const origin = `${app.location.lat},${app.location.lng}`;
+  const last = app.orderedStores[app.orderedStores.length - 1];
+  const dest = `${last.geometry.location.lat()},${last.geometry.location.lng()}`;
+  const wps = app.orderedStores.slice(0, -1)
+    .map(s => `${s.geometry.location.lat()},${s.geometry.location.lng()}`).join('|');
+
+  let url = `https://www.google.com/maps/dir/?api=1`
+    + `&origin=${encodeURIComponent(origin)}`
+    + `&destination=${encodeURIComponent(dest)}`
+    + `&travelmode=driving`;
+  if (wps) url += `&waypoints=${encodeURIComponent(wps)}`;
+  window.open(url, '_blank');
+}
+
+// ============================================================
+// 画面遷移
+// ============================================================
+function showStep(n) {
+  ['step-location','step-chains','step-stores','step-map'].forEach((id, i) => {
+    document.getElementById(id).hidden = (i + 1) !== n;
+  });
+  for (let i = 1; i <= 4; i++) {
+    document.getElementById('dot-' + i).classList.toggle('active', i <= n);
+  }
+  window.scrollTo(0, 0);
+}
+
+function restart() {
+  app.selectedChainIds = new Set();
+  app.customChains = [];
+  app.foundStores = [];
+  app.selectedPlaceIds = new Set();
+  app.orderedStores = [];
+  app.routeResult = null;
+  app.map = null;
+  app.directionsRenderer = null;
+  app._dummyMap = null;
+  document.querySelectorAll('.chain-btn').forEach(b => b.classList.remove('selected'));
+  document.getElementById('grid-custom').innerHTML = '';
+  document.getElementById('btn-search').disabled = true;
+  showStep(2);
+}
+
+// ============================================================
+// ユーティリティ
+// ============================================================
+function haverDist(a, b) {
+  const R = 6371000;
+  const dLat = (b.lat - a.lat) * Math.PI / 180;
+  const dLng = (b.lng - a.lng) * Math.PI / 180;
+  const x = Math.sin(dLat/2)**2
+    + Math.cos(a.lat*Math.PI/180) * Math.cos(b.lat*Math.PI/180) * Math.sin(dLng/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1-x));
+}
+
+function fmtDist(m) {
+  return m < 1000 ? `${Math.round(m)}m` : `${(m/1000).toFixed(1)}km`;
+}
+
+function fmtTime(sec) {
+  const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60);
+  return h > 0 ? `${h}時間${m}分` : `${m}分`;
+}
+
+function esc(s) {
+  const d = document.createElement('div');
+  d.textContent = s || '';
+  return d.innerHTML;
+}
+</script>
+
+<!-- Google Maps API（APIキーはここにも入力） -->
+<script async
+  src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY_HERE&libraries=places&callback=initApp&language=ja">
+</script>
+
+</body>
+</html>
