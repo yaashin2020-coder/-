@@ -507,12 +507,12 @@ async function doSearch() {
   const list = document.getElementById('store-list');
   const loading = document.getElementById('store-list-loading');
   const noMsg = document.getElementById('no-stores-msg');
-  const calcBtn = document.getElementById('btn-calc');
 
   list.innerHTML = '';
   noMsg.hidden = true;
   loading.hidden = false;
-  calcBtn.disabled = true;
+  document.getElementById('btn-calc').disabled = true;
+  app.selectedPlaceIds = new Set();
 
   // 検索対象チェーンを収集
   const chains = [];
@@ -528,36 +528,42 @@ async function doSearch() {
   }
   const service = new google.maps.places.PlacesService(app._dummyMap);
 
-  // 各チェーンを並行検索
-  const results = await Promise.allSettled(
-    chains.map(c => searchChain(service, c))
+  const seen = new Map();
+  let remaining = chains.length;
+
+  // 結果が届いたらすぐ表示（逐次表示）
+  const promises = chains.map(c =>
+    searchChain(service, c).then(results => {
+      remaining--;
+      results.forEach(place => {
+        if (seen.has(place.place_id)) return;
+        seen.set(place.place_id, {
+          ...place,
+          chainName: c.name,
+          dist: haverDist(app.location, {
+            lat: place.geometry.location.lat(),
+            lng: place.geometry.location.lng(),
+          }),
+        });
+      });
+      app.foundStores = [...seen.values()].sort((a, b) => a.dist - b.dist).slice(0, 40);
+      if (app.foundStores.length > 0) {
+        loading.hidden = true;
+        renderStoreList(remaining > 0);
+        updateSelCount();
+      }
+    })
   );
 
-  // 重複除去・距離ソート
-  const seen = new Map();
-  results.forEach((r, i) => {
-    if (r.status !== 'fulfilled') return;
-    r.value.forEach(place => {
-      if (seen.has(place.place_id)) return;
-      seen.set(place.place_id, {
-        ...place,
-        chainName: chains[i].name,
-        dist: haverDist(app.location, {
-          lat: place.geometry.location.lat(),
-          lng: place.geometry.location.lng(),
-        }),
-      });
-    });
-  });
+  await Promise.allSettled(promises);
 
+  // 全完了後、最終表示
   app.foundStores = [...seen.values()].sort((a, b) => a.dist - b.dist).slice(0, 40);
-  app.selectedPlaceIds = new Set();
-
   loading.hidden = true;
   if (app.foundStores.length === 0) {
     noMsg.hidden = false;
   } else {
-    renderStoreList();
+    renderStoreList(false);
   }
   updateSelCount();
 }
@@ -578,7 +584,7 @@ function searchChain(service, chain) {
 // ============================================================
 // 店舗リスト表示
 // ============================================================
-function renderStoreList() {
+function renderStoreList(isSearching = false) {
   const list = document.getElementById('store-list');
   list.innerHTML = '';
   app.foundStores.forEach(store => {
@@ -597,6 +603,12 @@ function renderStoreList() {
     el.onclick = () => toggleStore(store.place_id, el);
     list.appendChild(el);
   });
+  if (isSearching) {
+    const el = document.createElement('div');
+    el.style.cssText = 'text-align:center;padding:10px;font-size:13px;color:#8e8e93;';
+    el.innerHTML = '<span style="display:inline-block;width:12px;height:12px;border:2px solid #e5e5ea;border-top-color:#007AFF;border-radius:50%;animation:spin 0.8s linear infinite;margin-right:6px;vertical-align:middle;"></span>他の店舗を検索中…';
+    list.appendChild(el);
+  }
 }
 
 function toggleStore(placeId, el) {
