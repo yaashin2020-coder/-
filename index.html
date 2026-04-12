@@ -521,28 +521,24 @@ async function doSearch() {
   }
   app.customChains.forEach(c => { if (app.selectedChainIds.has(c.id)) chains.push(c); });
 
-  // 一時マップ（PlacesService用）
-  if (!app._dummyMap) {
-    const div = document.createElement('div');
-    app._dummyMap = new google.maps.Map(div, { center: app.location, zoom: 14 });
-  }
-  const service = new google.maps.places.PlacesService(app._dummyMap);
-
   const seen = new Map();
   let remaining = chains.length;
 
   // 結果が届いたらすぐ表示（逐次表示）
   const promises = chains.map(c =>
-    searchChain(service, c).then(results => {
+    searchChain(c).then(results => {
       remaining--;
       results.forEach(place => {
-        if (seen.has(place.place_id)) return;
-        seen.set(place.place_id, {
-          ...place,
+        if (seen.has(place.id)) return;
+        seen.set(place.id, {
+          id: place.id,
+          displayName: place.displayName,
+          location: place.location,
+          formattedAddress: place.formattedAddress,
           chainName: c.name,
           dist: haverDist(app.location, {
-            lat: place.geometry.location.lat(),
-            lng: place.geometry.location.lng(),
+            lat: place.location.lat(),
+            lng: place.location.lng(),
           }),
         });
       });
@@ -571,24 +567,22 @@ async function doSearch() {
   updateSelCount();
 }
 
-function searchChain(service, chain) {
-  return new Promise(resolve => {
-    // 10秒でタイムアウト
-    const timer = setTimeout(() => resolve([]), 10000);
-    service.nearbySearch(
-      { location: app.location, radius: app.radius, keyword: chain.kw },
-      (results, status) => {
-        clearTimeout(timer);
-        if (status === google.maps.places.PlacesServiceStatus.OK) {
-          resolve(results);
-        } else {
-          // エラー内容をコンソールに出力
-          console.warn(`[${chain.name}] Places API status: ${status}`);
-          resolve([]);
-        }
-      }
-    );
-  });
+async function searchChain(chain) {
+  try {
+    const { places } = await google.maps.places.Place.searchByText({
+      textQuery: chain.kw,
+      fields: ['id', 'displayName', 'location', 'formattedAddress', 'businessStatus'],
+      locationBias: {
+        center: { lat: app.location.lat, lng: app.location.lng },
+        radius: app.radius,
+      },
+      maxResultCount: 20,
+    });
+    return places || [];
+  } catch (e) {
+    console.warn(`[${chain.name}] searchByText error:`, e);
+    return [];
+  }
 }
 
 // ============================================================
@@ -600,17 +594,17 @@ function renderStoreList(isSearching = false) {
   app.foundStores.forEach(store => {
     const el = document.createElement('div');
     el.className = 'store-item';
-    const checked = app.selectedPlaceIds.has(store.place_id);
+    const checked = app.selectedPlaceIds.has(store.id);
     el.innerHTML = `
       <div class="store-checkbox ${checked ? 'checked' : ''}"></div>
       <div class="store-info">
-        <div class="store-name">${esc(store.name)}</div>
+        <div class="store-name">${esc(store.displayName)}</div>
         <div class="store-chain-tag">${esc(store.chainName)}</div>
-        <div class="store-addr">${esc(store.vicinity || '')}</div>
+        <div class="store-addr">${esc(store.formattedAddress || '')}</div>
       </div>
       <div class="store-dist">${fmtDist(store.dist)}</div>
     `;
-    el.onclick = () => toggleStore(store.place_id, el);
+    el.onclick = () => toggleStore(store.id, el);
     list.appendChild(el);
   });
   if (isSearching) {
@@ -648,7 +642,7 @@ async function calcRoute() {
   btn.disabled = true;
   btn.textContent = '計算中…';
 
-  const stores = app.foundStores.filter(s => app.selectedPlaceIds.has(s.place_id));
+  const stores = app.foundStores.filter(s => app.selectedPlaceIds.has(s.id));
 
   // Step 4の地図エリアに切り替え
   showStep(4);
@@ -664,7 +658,7 @@ async function calcRoute() {
   try {
     const origin = new google.maps.LatLng(app.location.lat, app.location.lng);
     const storeLatLngs = stores.map(s =>
-      new google.maps.LatLng(s.geometry.location.lat(), s.geometry.location.lng())
+      new google.maps.LatLng(s.location.lat(), s.location.lng())
     );
 
     let request;
@@ -741,7 +735,7 @@ function renderRouteInfo(result, orderedStores, storeCount) {
     steps.appendChild(makeStepEl(
       isLast ? 'dest' : '',
       String(i + 1),
-      store.name,
+      store.displayName,
       `${leg.distance.text} ／ 約${leg.duration.text}`
     ));
   });
@@ -767,9 +761,9 @@ function openGoogleMaps() {
   if (!app.orderedStores.length) return;
   const origin = `${app.location.lat},${app.location.lng}`;
   const last = app.orderedStores[app.orderedStores.length - 1];
-  const dest = `${last.geometry.location.lat()},${last.geometry.location.lng()}`;
+  const dest = `${last.location.lat()},${last.location.lng()}`;
   const wps = app.orderedStores.slice(0, -1)
-    .map(s => `${s.geometry.location.lat()},${s.geometry.location.lng()}`).join('|');
+    .map(s => `${s.location.lat()},${s.location.lng()}`).join('|');
 
   let url = `https://www.google.com/maps/dir/?api=1`
     + `&origin=${encodeURIComponent(origin)}`
@@ -801,7 +795,7 @@ function restart() {
   app.routeResult = null;
   app.map = null;
   app.directionsRenderer = null;
-  app._dummyMap = null;
+  app._dummyMap = null; // 互換性のために残す
   document.querySelectorAll('.chain-btn').forEach(b => b.classList.remove('selected'));
   document.getElementById('grid-custom').innerHTML = '';
   document.getElementById('btn-search').disabled = true;
