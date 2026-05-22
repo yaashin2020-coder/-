@@ -226,6 +226,60 @@
     .modal-body { font-size: 14px; color: #3c3c43; line-height: 1.7; }
     .modal-body h3 { font-size: 15px; font-weight: 700; margin: 14px 0 6px; }
     .modal-body p { margin-bottom: 10px; }
+
+    /* アプリ紹介 */
+    .intro-card {
+      background: linear-gradient(135deg, #007AFF 0%, #0055D4 100%);
+      color: white; border-radius: 16px; padding: 18px;
+      margin-bottom: 14px;
+    }
+    .intro-card h2 { font-size: 17px; font-weight: 800; margin-bottom: 4px; }
+    .intro-card p { font-size: 13px; opacity: 0.9; margin-bottom: 14px; line-height: 1.6; }
+    .feature-list { display: flex; flex-direction: column; gap: 8px; }
+    .feature-item {
+      display: flex; align-items: center; gap: 10px;
+      background: rgba(255,255,255,0.15); border-radius: 10px; padding: 10px 12px;
+    }
+    .feature-icon { font-size: 22px; flex-shrink: 0; }
+    .feature-text { font-size: 13px; font-weight: 600; }
+
+    /* おすすめサービス */
+    .section-label {
+      font-size: 13px; font-weight: 700; color: #8e8e93;
+      margin: 20px 0 10px; letter-spacing: 0.3px;
+    }
+    .service-card {
+      background: white; border-radius: 14px; padding: 14px 16px;
+      margin-bottom: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+      display: flex; align-items: center; gap: 14px;
+    }
+    .service-icon { font-size: 32px; flex-shrink: 0; }
+    .service-info { flex: 1; }
+    .service-name { font-size: 15px; font-weight: 700; margin-bottom: 3px; }
+    .service-desc { font-size: 12px; color: #8e8e93; line-height: 1.5; }
+    .service-badge {
+      font-size: 11px; font-weight: 700; color: white;
+      background: #FF9500; border-radius: 6px; padding: 3px 8px; flex-shrink: 0;
+    }
+
+    /* 使い方ステップ */
+    .how-step {
+      display: flex; gap: 14px; align-items: flex-start; margin-bottom: 16px;
+    }
+    .how-num {
+      width: 30px; height: 30px; border-radius: 50%;
+      background: #007AFF; color: white;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 800; flex-shrink: 0;
+    }
+    .how-content h4 { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+    .how-content p { font-size: 13px; color: #636366; margin: 0; }
+
+    /* FAQ */
+    .faq-item { border-bottom: 1px solid #f2f2f7; padding: 12px 0; }
+    .faq-item:last-child { border-bottom: none; }
+    .faq-q { font-size: 14px; font-weight: 700; margin-bottom: 6px; color: #007AFF; }
+    .faq-a { font-size: 13px; color: #3c3c43; line-height: 1.6; }
   </style>
 </head>
 <body>
@@ -256,6 +310,27 @@
 <!-- STEP 2: チェーン選択 -->
 <div id="step-chains" hidden>
   <div class="container">
+
+    <!-- アプリ紹介カード -->
+    <div class="intro-card">
+      <h2>まとめてルートとは？</h2>
+      <p>複数の店舗をまとめて回る「最短ルート」を自動計算するWebアプリです。無駄な移動を減らして、お買い物をもっとスマートに。</p>
+      <div class="feature-list">
+        <div class="feature-item">
+          <span class="feature-icon">📍</span>
+          <span class="feature-text">現在地から近い順に店舗を自動検索</span>
+        </div>
+        <div class="feature-item">
+          <span class="feature-icon">🗺️</span>
+          <span class="feature-text">最大5か所を最短順に並べてルート最適化</span>
+        </div>
+        <div class="feature-item">
+          <span class="feature-icon">🚗</span>
+          <span class="feature-text">Googleマップへワンタップで引き継いでナビ開始</span>
+        </div>
+      </div>
+    </div>
+
     <div class="card">
       <h2>行きたいお店を選んでください</h2>
 
@@ -290,6 +365,10 @@
 
     <button class="btn-primary" id="btn-search" onclick="goToSearch()" disabled>
       近くの店舗を探す →
+    </button>
+
+    <button class="btn-secondary" onclick="openModal('modal-howto')" style="margin-top:10px;">
+      使い方を見る
     </button>
   </div>
 </div>
@@ -342,6 +421,40 @@
     </button>
     <button class="btn-secondary" onclick="showStep(3)">← 店舗を選び直す</button>
     <button class="btn-danger" onclick="restart()">最初からやり直す</button>
+
+    <!-- おすすめサービス -->
+    <div class="section-label">お出かけ前に役立つサービス</div>
+
+    <div class="service-card">
+      <span class="service-icon">🛍️</span>
+      <div class="service-info">
+        <div class="service-name">楽天市場</div>
+        <div class="service-desc">お店で見た商品をネットで比較・購入。ポイントも貯まる！</div>
+      </div>
+      <span class="service-badge">PR</span>
+    </div>
+
+    <div class="service-card">
+      <span class="service-icon">📦</span>
+      <div class="service-info">
+        <div class="service-name">Amazon</div>
+        <div class="service-desc">重い荷物は配送に。最短翌日お届けで移動負担を軽減。</div>
+      </div>
+      <span class="service-badge">PR</span>
+    </div>
+
+    <div class="service-card">
+      <span class="service-icon">🚘</span>
+      <div class="service-info">
+        <div class="service-name">カーシェアサービス</div>
+        <div class="service-desc">まとめ買いのお出かけに。近くのクルマをすぐ借りられる。</div>
+      </div>
+      <span class="service-badge">PR</span>
+    </div>
+
+    <p style="font-size:11px;color:#c7c7cc;text-align:center;margin-top:8px;margin-bottom:16px;">
+      ※「PR」と表示されているリンクは広告を含む場合があります
+    </p>
   </div>
 </div>
 
@@ -927,11 +1040,96 @@ function esc(s) {
 <footer class="app-footer">
   <p>© 2025 まとめてルート</p>
   <div class="footer-links">
+    <button class="footer-link" onclick="openModal('modal-howto')">使い方</button>
+    <button class="footer-link" onclick="openModal('modal-faq')">FAQ</button>
     <button class="footer-link" onclick="openModal('modal-about')">運営者情報</button>
     <button class="footer-link" onclick="openModal('modal-privacy')">プライバシーポリシー</button>
     <button class="footer-link" onclick="openModal('modal-contact')">お問い合わせ</button>
   </div>
 </footer>
+
+<!-- 使い方モーダル -->
+<div class="modal-overlay" id="modal-howto" hidden onclick="closeModalOnBg(event, 'modal-howto')">
+  <div class="modal-sheet">
+    <div class="modal-title">
+      使い方ガイド
+      <button class="modal-close" onclick="closeModal('modal-howto')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="how-step">
+        <div class="how-num">1</div>
+        <div class="how-content">
+          <h4>位置情報を許可する</h4>
+          <p>アプリを開くと「位置情報を使用しますか？」と表示されます。「許可」を選ぶと現在地が取得されます。</p>
+        </div>
+      </div>
+      <div class="how-step">
+        <div class="how-num">2</div>
+        <div class="how-content">
+          <h4>行きたいお店の種類を選ぶ</h4>
+          <p>ダイソー・カインズ・ウエルシアなど、行きたいチェーン店のボタンをタップして選択してください。複数選択できます。自分でお店の名前を入力して追加することもできます。</p>
+        </div>
+      </div>
+      <div class="how-step">
+        <div class="how-num">3</div>
+        <div class="how-content">
+          <h4>店舗を選ぶ</h4>
+          <p>周辺の店舗が距離順に表示されます。行きたいお店を最大5件選んでください。検索範囲（2km/5km/10km）も変更できます。</p>
+        </div>
+      </div>
+      <div class="how-step">
+        <div class="how-num">4</div>
+        <div class="how-content">
+          <h4>ルートを確認してナビ開始</h4>
+          <p>「ルートを計算する」をタップすると最短順のルートが表示されます。「Google マップで開く」でそのままカーナビとして使えます。</p>
+        </div>
+      </div>
+      <div style="background:#f2f2f7;border-radius:10px;padding:12px 14px;font-size:13px;color:#636366;">
+        <strong>ヒント：</strong> 電器屋まわりや100均・ドラッグストアをまとめて回るときに特に便利です。ガソリン代・時間の節約にどうぞ。
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FAQモーダル -->
+<div class="modal-overlay" id="modal-faq" hidden onclick="closeModalOnBg(event, 'modal-faq')">
+  <div class="modal-sheet">
+    <div class="modal-title">
+      よくある質問
+      <button class="modal-close" onclick="closeModal('modal-faq')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="faq-item">
+        <div class="faq-q">Q. 無料で使えますか？</div>
+        <div class="faq-a">はい、まとめてルートは完全無料でご利用いただけます。アカウント登録も不要です。</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Q. 位置情報はどこに保存されますか？</div>
+        <div class="faq-a">位置情報はお使いの端末（ブラウザ）内でのみ使用され、サーバーには保存されません。詳しくはプライバシーポリシーをご確認ください。</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Q. 何店舗まで同時に選べますか？</div>
+        <div class="faq-a">1回のルート計算で最大5店舗まで選択できます。</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Q. 徒歩・自転車でも使えますか？</div>
+        <div class="faq-a">現在は車でのルート（DRIVE）を基準に計算しています。Googleマップに引き継いだ後、ナビのモードを変更して徒歩・自転車でもご利用いただけます。</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Q. 行きたいお店がリストにありません</div>
+        <div class="faq-a">「カスタム（店舗名を入力）」欄にお店の名前を入力して「追加」ボタンを押すと、任意のお店を検索できます。</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Q. 店舗が見つからない場合は？</div>
+        <div class="faq-a">「検索範囲」を2km→5km→10kmと広げてみてください。それでも見つからない場合は、通信環境をご確認ください。</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Q. iPhoneのホーム画面に追加できますか？</div>
+        <div class="faq-a">Safariでこのページを開き、「共有」→「ホーム画面に追加」でアプリのように使えます。</div>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- 運営者情報モーダル -->
 <div class="modal-overlay" id="modal-about" hidden onclick="closeModalOnBg(event, 'modal-about')">
