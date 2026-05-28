@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#007AFF">
+  <title>今日のトレンド — 2026年5月28日</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Yu Gothic', sans-serif;
+      background: #f2f2f7;
+      color: #1c1c1e;
+      min-height: 100vh;
+    }
+
+    .app-header {
+      background: #007AFF;
+      color: white;
+      padding: 16px 20px;
+      padding-top: max(16px, env(safe-area-inset-top));
+      text-align: center;
+      position: sticky;
+      top: 0;
+      z-index: 200;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+    .app-header h1 { font-size: 18px; font-weight: 700; }
+    .app-header .date { font-size: 12px; opacity: 0.85; margin-top: 4px; }
+
+    .container { max-width: 540px; margin: 0 auto; padding: 16px; }
+
+    .hero-card {
+      background: linear-gradient(135deg, #1c3a6e 0%, #007AFF 100%);
+      border-radius: 20px;
+      padding: 24px 20px;
+      margin-bottom: 16px;
+      color: white;
+      box-shadow: 0 4px 16px rgba(0,122,255,0.3);
+    }
+    .hero-card .label {
+      font-size: 11px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 1px; opacity: 0.75; margin-bottom: 8px;
+    }
+    .hero-card h2 { font-size: 22px; font-weight: 800; line-height: 1.35; margin-bottom: 10px; }
+    .hero-card p { font-size: 14px; opacity: 0.9; line-height: 1.65; }
+    .hero-tag {
+      display: inline-block; background: rgba(255,255,255,0.2);
+      border-radius: 20px; padding: 4px 12px;
+      font-size: 12px; font-weight: 700; margin-top: 12px;
+    }
+
+    .section-title {
+      font-size: 12px; font-weight: 700; color: #8e8e93;
+      text-transform: uppercase; letter-spacing: 0.5px;
+      margin: 20px 0 10px;
+    }
+
+    .card {
+      background: white; border-radius: 16px;
+      padding: 16px 18px; margin-bottom: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+
+    .trend-item {
+      display: flex; align-items: flex-start; gap: 14px;
+      padding: 12px 0; border-bottom: 1px solid #f2f2f7;
+    }
+    .trend-item:last-child { border-bottom: none; padding-bottom: 0; }
+    .trend-item:first-child { padding-top: 0; }
+
+    .trend-icon {
+      width: 44px; height: 44px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; flex-shrink: 0;
+    }
+    .bg-red    { background: #fff0f0; }
+    .bg-blue   { background: #eef4ff; }
+    .bg-green  { background: #edfbf2; }
+    .bg-yellow { background: #fffbea; }
+    .bg-purple { background: #f5eeff; }
+    .bg-orange { background: #fff4ec; }
+
+    .trend-body { flex: 1; min-width: 0; }
+    .trend-category {
+      font-size: 10px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.5px; color: #007AFF; margin-bottom: 3px;
+    }
+    .trend-title { font-size: 15px; font-weight: 700; line-height: 1.4; margin-bottom: 4px; }
+    .trend-desc { font-size: 13px; color: #48484a; line-height: 1.6; }
+
+    .badge {
+      display: inline-block; border-radius: 8px;
+      padding: 2px 8px; font-size: 11px; font-weight: 700;
+      margin-left: 6px; vertical-align: middle;
+    }
+    .badge-hot   { background: #ffebeb; color: #FF3B30; }
+    .badge-new   { background: #eef4ff; color: #007AFF; }
+    .badge-up    { background: #edfbf2; color: #34C759; }
+
+    .market-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;
+    }
+    .market-box {
+      background: white; border-radius: 14px;
+      padding: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      text-align: center;
+    }
+    .market-label { font-size: 11px; color: #8e8e93; margin-bottom: 4px; }
+    .market-value { font-size: 20px; font-weight: 800; }
+    .market-change { font-size: 12px; font-weight: 700; margin-top: 2px; }
+    .down { color: #FF3B30; }
+    .up   { color: #34C759; }
+
+    .footer {
+      text-align: center;
+      font-size: 12px;
+      color: #aeaeb2;
+      padding: 24px 16px;
+      padding-bottom: max(24px, env(safe-area-inset-bottom));
+    }
+    .footer a { color: #007AFF; text-decoration: none; }
+  </style>
+</head>
+<body>
+
+<header class="app-header">
+  <h1>📰 今日のトレンド</h1>
+  <div class="date">2026年5月28日（木）</div>
+</header>
+
+<div class="container">
+
+  <!-- ヒーロー：日経平均 -->
+  <div class="hero-card">
+    <div class="label">Market Highlight</div>
+    <h2>日経平均、AI相場の利確売りで<br>64,693円に反落</h2>
+    <p>AI半導体関連株の急騰後に利益確定売りが広がり、日経225は前日比▲0.47%の64,693円で引け。SoftBank（▲2.0%）、Lasertec（▲3.4%）など主力テック銘柄が大きく下げた。</p>
+    <span class="hero-tag">🤖 AIバブル警戒ムード</span>
+  </div>
+
+  <!-- マーケットサマリー -->
+  <div class="section-title">マーケットサマリー</div>
+  <div class="market-grid">
+    <div class="market-box">
+      <div class="market-label">日経225</div>
+      <div class="market-value down">64,693</div>
+      <div class="market-change down">▼ 0.47%</div>
+    </div>
+    <div class="market-box">
+      <div class="market-label">TOPIX</div>
+      <div class="market-value down">3,902</div>
+      <div class="market-change down">▼ 0.41%</div>
+    </div>
+    <div class="market-box">
+      <div class="market-label">BofA 年末予測（日経）</div>
+      <div class="market-value up">67,000</div>
+      <div class="market-change up">▲ 上方修正</div>
+    </div>
+    <div class="market-box">
+      <div class="market-label">BofA 年末予測（TOPIX）</div>
+      <div class="market-value up">4,200</div>
+      <div class="market-change up">▲ 上方修正</div>
+    </div>
+  </div>
+
+  <!-- 今日のトレンド -->
+  <div class="section-title">今日のトレンドニュース</div>
+  <div class="card">
+
+    <div class="trend-item">
+      <div class="trend-icon bg-red">🤖</div>
+      <div class="trend-body">
+        <div class="trend-category">テクノロジー</div>
+        <div class="trend-title">日本、AI半導体サプライチェーンの中核に<span class="badge badge-hot">HOT</span></div>
+        <div class="trend-desc">半導体製造装置・素材・部品を世界に供給する構造的優位性から、BofAなど米大手証券が日本株の目標を大幅上方修正。Advantest・Fujikura・Lasertecに海外マネー集中。</div>
+      </div>
+    </div>
+
+    <div class="trend-item">
+      <div class="trend-icon bg-blue">🚗</div>
+      <div class="trend-body">
+        <div class="trend-category">ビジネス</div>
+        <div class="trend-title">トヨタ、年間売上50兆円突破——日本企業初<span class="badge badge-new">NEW</span></div>
+        <div class="trend-desc">トヨタ自動車が日本の企業史上初めて年間売上高50兆円を達成。北米・アジアでのHVシフトと円安が後押し。国内外で自動車産業の復権を象徴するニュースとして注目が集まっている。</div>
+      </div>
+    </div>
+
+    <div class="trend-item">
+      <div class="trend-icon bg-yellow">🔍</div>
+      <div class="trend-body">
+        <div class="trend-category">エンタメ</div>
+        <div class="trend-title">名探偵コナン映画、4作連続で興行100億円突破<span class="badge badge-hot">HOT</span></div>
+        <div class="trend-desc">2026年版劇場版コナンが公開2週間で興行収入100億円を突破。コナン映画の100億円超えは4作連続。シリーズの安定した集客力と、ファン層の広がりが改めて証明された。</div>
+      </div>
+    </div>
+
+    <div class="trend-item">
+      <div class="trend-icon bg-purple">👗</div>
+      <div class="trend-body">
+        <div class="trend-category">ファッション</div>
+        <div class="trend-title">Z世代に「平成女児」ファッションが大ブーム<span class="badge badge-up">UP</span></div>
+        <div class="trend-desc">Y2Kから進化した「平成女児」スタイルがSNSで急拡散。少女漫画キャラ風のヘアアレンジ、缶バッジコーデ、おもちゃのようなコスメが若年層に人気。SHIBUYA109 lab.もトレンド予測に選定。</div>
+      </div>
+    </div>
+
+    <div class="trend-item">
+      <div class="trend-icon bg-orange">🎤</div>
+      <div class="trend-body">
+        <div class="trend-category">カルチャー</div>
+        <div class="trend-title">「笑点」放送開始60周年——立川談志から春風亭昇太へ</div>
+        <div class="trend-desc">日本テレビの演芸番組「笑点」が5月で放送開始60周年を迎えた。初代司会・立川談志から現在の春風亭昇太（6代目）まで変わらぬ人気を誇り、国民的番組として祝われている。</div>
+      </div>
+    </div>
+
+    <div class="trend-item">
+      <div class="trend-icon bg-green">💹</div>
+      <div class="trend-body">
+        <div class="trend-category">地政学</div>
+        <div class="trend-title">中東情勢緊迫——米イラン間の緊張が株式市場に波及</div>
+        <div class="trend-desc">米国がイランに対して新たな攻撃を実施したとの報道が流れ、イラン革命防衛隊が米軍基地を標的にしたと発表。リスクオフムードが高まり、日本株にも売り圧力が波及した。</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ひとこと解説 -->
+  <div class="section-title">今日のポイント</div>
+  <div class="card">
+    <p style="font-size:14px;line-height:1.75;color:#3a3a3c;">
+      日経平均は史上最高値圏での調整が続いていますが、BofAなど米大手証券は日本の<strong>AI半導体サプライチェーン</strong>優位性を評価して年末67,000円を予測。国内ではトヨタの売上50兆円突破やコナン映画の快進撃など明るいニュースも目立ちます。Z世代トレンドは「平成リバイバル」が本格化しており、コンテンツ・ファッション両面で盛り上がっています。
+    </p>
+  </div>
+
+</div>
+
+<div class="footer">
+  <p>2026年5月28日 更新</p>
+  <p style="margin-top:6px;">
+    情報源:
+    <a href="https://invezz.com/news/2026/05/27/nikkei-hits-record-high-as-ai-chip-frenzy-powers-japan-stocks/" target="_blank">Invezz</a> /
+    <a href="https://prtimes.jp/main/html/rd/p/000000389.000033586.html" target="_blank">SHIBUYA109 lab.</a> /
+    <a href="https://www.jiji.com/jc/archives?g=soc_archive_0" target="_blank">時事ドットコム</a>
+  </p>
+</div>
+
+</body>
+</html>
