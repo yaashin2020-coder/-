@@ -9,6 +9,26 @@ note_username: long_whale5827
 プロフィール: https://note.com/long_whale5827
 RSS: https://note.com/long_whale5827/rss
 
+## 下書きの出どころ
+
+記事の下書きは `note365-auto-post` が自動生成し、**公開はユーザーが手で行う。**
+下書きが読める場所にあるなら、ここに書いておけば本文を貼り直さずに済む。
+
+```
+draft_source:
+```
+
+書き方の例：
+
+- `Google Drive: マイドライブ/note下書き/` … Driveコネクタで読む
+- `Notion: 「note記事」データベース` … Notionコネクタで読む
+- `local: ~/note365-auto-post/drafts/` … **このenvironmentからは読めない**
+  （コンテナはリポジトリしかクローンしていない。ローカルPCのファイルは見えない）
+- 空欄 … 毎回ユーザーが本文か要点を貼る
+
+**記事URLは公開後にしか決まらないので、下書きから本文を読めた場合でも
+URLは必ずユーザーに聞く。**
+
 ## 運用モード
 
 ```
