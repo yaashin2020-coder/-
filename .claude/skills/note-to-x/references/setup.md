@@ -1,7 +1,15 @@
 # セットアップ手順
 
-自動投稿には **(A) Xの認証情報** と **(B) ネットワーク許可** の両方が要る。
-どちらも用意できない間は `--intent`（ワンタップ投稿リンク）で運用できる。
+やりたいことによって必要な準備が違う。**Bだけ済ませれば「投稿した」の一言で
+済むようになる**（AはXへの送信まで自動化したい場合のみ）。
+
+| やりたいこと | 必要な準備 |
+|---|---|
+| 投稿文を作る＋ワンタップリンク | **なし。今すぐ使える**（毎回URLと要点を貼る） |
+| 「投稿した」の一言だけで投稿文を作る | **B**（note.com の許可） |
+| Xへの送信まで自動 | **A + B** |
+
+**おすすめはBまで。** 手間はほぼ消えて、Xへ送信するかどうかは自分の指で決められる。
 
 ## A. Xの認証情報を取る
 
@@ -28,8 +36,10 @@ variables から登録する。
 CONNECT に 403 が返る）。environment のネットワークポリシーで、以下の
 ホストを許可リストに追加する：
 
-- `api.x.com` … 投稿に必要
-- `note.com` … 記事本文の取得に必要（RSS `https://note.com/<user>/rss` を含む）
+- **`note.com`** … 記事の取得に必要（RSS `https://note.com/<user>/rss` を含む）。
+  **これを許可すると「投稿した」の一言だけで済むようになる。**
+  URLも要点も貼らなくてよくなるので、効果が一番大きいのはここ。
+- `api.x.com` … Xへの送信まで自動化する場合のみ
 - `assets.st-note.com` … 記事内の画像を扱う場合のみ
 
 設定場所と各ポリシーの説明：
@@ -38,10 +48,11 @@ https://code.claude.com/docs/en/claude-code-on-the-web
 許可が入ったか確かめる：
 
 ```bash
-curl -sS -o /dev/null -w "%{http_code}\n" https://api.x.com/2/openapi.json
+python3 scripts/fetch_note_latest.py --user long_whale5827
 ```
 
-`000` かつ `curl: (56) CONNECT tunnel failed` ならまだ塞がっている。
+最新記事のJSONが出れば通っている。`Tunnel connection failed: 403` と出るなら
+まだ塞がっている。
 
 ## C. 動作確認
 

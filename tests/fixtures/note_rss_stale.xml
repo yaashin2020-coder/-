@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/">
+<channel>
+<title>long_whale5827｜note</title>
+<link>https://note.com/long_whale5827</link>
+<item>
+<title>ルート最適化アプリを個人開発した話</title>
+<link>https://note.com/long_whale5827/n/nRECENT001</link>
+<guid>https://note.com/long_whale5827/n/nRECENT001</guid>
+<pubDate>Wed, 15 Jul 2026 21:35:34 GMT</pubDate>
+<dc:creator>long_whale5827</dc:creator>
+<description>複数店舗をまわる順番を自動で決めるアプリを作りました。</description>
+<content:encoded><![CDATA[<p>複数の店舗をまわるとき、どの順番が一番早いか毎回迷っていました。</p><p>そこで「まとめてルート」というアプリを作りました。&amp;nbsp;店舗を入れると最短ルートを出します。</p><h2>詰まったところ</h2><ul><li>経路APIの料金が想像より高かった</li><li>スマホのSafariで位置情報が取れない</li></ul><script>ignore_me()</script><p>結局、候補を絞ってから呼ぶ設計にして解決しました。</p>]]></content:encoded>
+</item>
+<item>
+<title>古い記事のタイトル</title>
+<link>https://note.com/long_whale5827/n/nOLD002</link>
+<pubDate>Thu, 16 Jul 2026 21:35:34 GMT</pubDate>
+<content:encoded><![CDATA[<p>これは前に書いた記事です。</p>]]></content:encoded>
+</item>
+</channel>
+</rss>
