@@ -101,8 +101,12 @@ def load_credentials() -> dict | None:
 
 
 def intent_url(text: str) -> str:
-    """開くと本文入りのX投稿画面になるURL。認証情報もAPIも不要。"""
-    return f"{INTENT_ENDPOINT}?{urllib.parse.urlencode({'text': text})}"
+    """開くと本文入りのX投稿画面になるURL。認証情報もAPIも不要。
+
+    空白は `+` ではなく `%20` にする。`+` を空白として解釈しない環境で、
+    本文に `+` がそのまま出てしまうのを避けるため。
+    """
+    return f"{INTENT_ENDPOINT}?text={urllib.parse.quote(text, safe='')}"
 
 
 def post_tweet(text: str, creds: dict, reply_to: str | None = None) -> dict:

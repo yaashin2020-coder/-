@@ -3,11 +3,23 @@
 ## noteのアカウント
 
 ```
-note_username:
+note_username: long_whale5827
 ```
 
-`https://note.com/<ここ>/` の部分。埋めておくと、URLを貼らずに
-「noteを投稿したよ」だけで最新記事を取りに行ける（要ネットワーク許可）。
+プロフィール: https://note.com/long_whale5827
+RSS: https://note.com/long_whale5827/rss
+
+## 運用モード
+
+```
+mode: intent
+```
+
+`intent` = ワンタップ投稿。私は投稿文とリンクを作るところまでで、送信ボタンは
+ユーザーが押す。APIキー・ネットワーク許可は不要。
+
+`auto` に切り替えると `scripts/post_to_x.py` が直接投稿する（`references/setup.md`
+の準備が済んでいる場合のみ）。
 
 ## 投稿スタイル
 
